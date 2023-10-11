@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'bootstrap_css.css' %}">
+    <script src="{% static 'bootstrap.js' %}"></script>
+    <style>
+        body {
+            background: linear-gradient(45deg, #ff6b6b, #007BFF, #00d25b);
+            color: #fff; /* Text color */
+            margin: 0; /* Remove default body margin */
+            padding: 0; /* Remove default body padding */
+            font-family: Arial, sans-serif;
+        }
+
+        .navbar {
+            background-color: #4c4c4c; /* Navbar background color */
+            color: #fff;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: calc(100vh - 60px); /* Adjust the height for the footer */
+        }
+
+        .footer {
+            background-color: #4c4c4c; /* Footer background color */
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+            width: 100%;
+            position: absolute;
+            bottom: 0;
+        }
+
+        .menu-button {
+            background-color: #d0d0d0;
+            color: #000000;
+            border: none;
+            border-radius: 20px; /* Make the edges rounder */
+            padding: 20px 40px; /* Make the buttons twice as big */
+            margin: 10px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            display: inline-block; /* Make buttons horizontal */
+            width: 100%;
+            font-size: 16px; /* Increase font size */
+        }
+
+        .menu-button:hover {
+            transform: scale(1.1); /* Expand the button on hover */
+        }
+
+        .button-content {
+            display: none;
+            text-align: center;
+        }
+
+        .button-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div>
+            Teacher: {{ request.user }}
+        </div>
+        <div>
+            <a href="{% url 'users:logout_page' %}" class="btn btn-danger">Logout</a>
+        </div>
+    </div>
+    <div class="container">
+        <!-- Add your teacher dashboard content here -->
+        <div class="row">
+            <div class="col-md-4">
+                <button class="menu-button" onclick="showContent('Discussions')">Discussions</button>
+            </div>
+            <div class="col-md-4">
+                <button class="menu-button" onclick="showContent('CreateTasks')">Create Quizzes</button>
+            </div>
+            <div class="col-md-4">
+                <button class="menu-button" onclick="showContent('viewAllQuizResults')">View Results</button>
+            </div>
+        </div>
+        <div class="button-content" id="Discussions">
+
+            <!-- Display existing discussions -->
+            <div class="existing-discussions">
+            {% for discussion in discussions %}
+                <div class="discussion" style="border: 2px solid black; border-radius: 15px;background-color: rgb(66, 66, 66);">
+                    <h3>{{ discussion.subject }}</h3>
+                    <p>{{ discussion.message }}</p>
+                    <!-- You can also display the author and date if needed -->
+                </div><br>
+            {% empty %}
+                <p>No discussions available.</p>
+            {% endfor %}
+        </div>
+        
+        <!-- Create a new discussion form -->
+        <div class="new-discussion-form">
+            <h3>Create a New Discussion</h3>
+            <form method="post" action="{% url 'students:create_discussion' %}">
+                {% csrf_token %}
+                <label for="subject">Subject:</label><br>
+                <input type="text" id="subject" name="subject" required><br>
+                <label for="message">Message:</label><br>
+                <textarea id="message" name="message" rows="4" required></textarea><br><br>
+                <input type="submit" class="btn btn-secondary btn-block" value="Create Discussion">
+            </form>
+        </div>
+
+
+        </div>
+        <div class="button-content" id="CreateTasks">
+            <!-- Content for Create Quizzes or Practice -->
+            <h2>Create Quizzes</h2>
+            <div id="quizCreationForm">
+                <!-- Quiz creation form -->
+                <form method="POST" action="{% url 'teachers:create_quiz' %}">
+                    {% csrf_token %}
+                    <label for="title">Quiz Question:</label>
+                    <input type="text" id="title" name="title"><br><br>
+                    <label for="answ1">answer 1:</label>
+                    <input type="text" id="answ1" name="answ1"><br>
+                    <label for="answ2">answer 2:</label>
+                    <input type="text" id="answ2" name="answ2"><br>
+                    <label for="answ3">answer 3:</label>
+                    <input type="text" id="answ3" name="answ3"><br>
+                    <label for="answ4">answer 4:</label>
+                    <input type="text" id="answ4" name="answ4"><br>
+                    <label for="CA">Corect answer:</label>
+                    <input type="number" id="CA" name="CA" placeholder="1-4" min="1" max="4" step="1"><br>
+                    <input class="btn btn-secondary btn-block" type="submit" value="Create">
+                </form>
+            </div>
+        </div>
+        <div class="button-content" id="viewAllQuizResults">
+            <!-- Content for View Quiz Results -->
+            <h2>View All Quiz Results</h2>
+            <!-- Display the student's grades -->
+            <div class="student-grades">
+                {% if student_grades %}
+                    <table class="table table-bordered" style="background-color: #c1c1c1;">
+                        <thead>
+                            <tr>
+                                <th>Quiz</th>
+                                <th>Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for grade in student_grades %}
+                                <tr>
+                                    <td>{{ grade.student }}</td>
+                                    <td>{{ grade.quiz.title }}</td>
+                                    <td>%{{ grade.grade }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <h5>Overall Average: %{{  final_grade }}</h5>
+                {% else %}
+                    <p>No grades available.</p>
+                {% endif %}
+            </div>
+        </div>
+        </div>
+    </div>
+    <div class="footer">
+        &copy; 2023 Marcus Allen
+    </div>
+    <script>
+        function showContent(contentId) {
+            // Hide all button content
+            var buttonContents = document.querySelectorAll('.button-content');
+            buttonContents.forEach(function (content) {
+                content.classList.remove('active');
+            });
+    
+            // Show the selected button content
+            var selectedContent = document.getElementById(contentId);
+            selectedContent.classList.add('active');
+        }
+    </script>
+    
+</body>
+</html>

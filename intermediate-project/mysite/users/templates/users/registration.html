@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Registration</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'bootstrap_css.css' %}"/>
+    <style>
+        body {
+            background: linear-gradient(45deg, #ff6b6b, #007BFF, #00d25b);
+            color: #fff; /* Text color */
+            margin: 0; /* Remove default body margin */
+            padding: 0; /* Remove default body padding */
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0px 0px 15px 5px rgba(0,0,0,0.2);
+            background-color: rgba(255, 255, 255, 0.9); /* Form background color with transparency */
+            color: #333; /* Text color inside the card */
+        }
+
+        .card-header {
+            background-color: #007BFF; /* Header background color */
+            color: #fff;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .card-title {
+            margin-bottom: 0;
+        }
+
+        .card-body {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .btn-primary {
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title text-center">Register</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        {{ account_form.as_p }}
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-block">Register</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{% static 'bootstrap.js' %}"></script>
+</body>
+</html>
