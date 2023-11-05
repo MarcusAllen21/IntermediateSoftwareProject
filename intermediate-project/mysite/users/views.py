@@ -27,54 +27,52 @@ def register(request):
 
             # save object into table
             account.save()
+
+            return redirect("users:login_page")
+
         except Exception as e:
-            print(e)
+            messages.error(request, "The username does Not Exist")
 
     # pass form into context
     context = {
         "form": form,
         "account_form": account_form,
-
     }
-
+    
     return render(request, "users/registration.html", context)
 
+# Login view with modifications
 def login_page(request):
-
-
-    # get details
     if request.method == "POST":
-
-        # get the input specifics
         username = request.POST.get("username")
         password = request.POST.get("password")
-        
-        try:
-            user = User.objects.get(username = username)
-            account = Account.objects.get(user = user)
 
-            auth = authenticate(request, username = username, password = password)
+        try:
+            user = User.objects.get(username=username)
+            auth = authenticate(request, username=username, password=password)
 
             if auth is not None:
-
                 login(request, user)
+                try:
+                    account = Account.objects.get(user=user)
+                    is_teacher = account.is_teacher
+                except Account.DoesNotExist:
+                    # Handle the case where an Account doesn't exist
+                    is_teacher = False  # Set a default value for is_teacher
 
-                is_teacher = account.is_teacher
-            
                 if is_teacher:
                     return redirect("teachers:index")
                 else:
                     return redirect("students:index")
-            
-        except Exception as e:
-            messages.error(request, "The username does Not Exist")
+            else:
+                messages.error(request, "Invalid credentials")
 
+        except User.DoesNotExist:
+            messages.error(request, "The username does not exist")
 
-
-    # pass form into context
     context = {}
-
     return render(request, "users/login.html", context)
+
 
 def logout_page(request):
     logout(request)

@@ -1,7 +1,8 @@
 from django.contrib import admin
-from .models import Discussion, Reply, Quiz, Grade
+from .models import Quiz, Question, Option, Grade, Discussion
 
 admin.site.register(Quiz)
+admin.site.register(Question)
+admin.site.register(Option)
 admin.site.register(Grade)
 admin.site.register(Discussion)
-admin.site.register(Reply)

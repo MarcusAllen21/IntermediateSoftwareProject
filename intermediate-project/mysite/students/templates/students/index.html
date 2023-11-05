@@ -62,11 +62,24 @@
 
         .button-content {
             display: none;
-            text-align: center;
         }
 
         .button-content.active {
             display: block;
+        }
+
+        /* Add cool styles for links in the student's navbar */
+        .cool-link {
+            text-decoration: none;
+            padding: 10px 20px;
+            color: #fff;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+
+        .cool-link:hover {
+            background-color: black;
         }
     </style>
 </head>
@@ -76,117 +89,23 @@
             User: {{ request.user }}
         </div>
         <div>
-            <a href="{% url 'users:logout_page' %}" class="btn btn-danger">Logout</a>
+            <a href="{% url 'students:create_discussion' %}" class="cool-link">Create Discussion</a>
+        </div>
+        <div>
+            <a href="{% url 'students:discussions' %}" class="cool-link">Discussions</a>
+        </div>
+        <div>
+            <a href="{% url 'students:quizzes' quiz_id=1 %}" class="cool-link">Quizzes</a>
+        </div>
+        <div>
+            <a href="{% url 'students:grades' %}" class="cool-link">Grades</a>
+        </div>
+        <div>
+            <a href="{% url 'users:logout_page' %}" class="cool-link btn btn-danger">Logout</a>
         </div>
     </div>
     <div class="container">
-        <!-- Add your dashboard content here -->
-        <div class="row">
-            <div class="col-md-4">
-                <button class="menu-button" onclick="showContent('discussions')">Discussions</button>
-            </div>
-            <div class="col-md-4">
-                <button class="menu-button" onclick="showContent('quizzes')">Quizzes</button>
-            </div>
-            <div class="col-md-4">
-                <button class="menu-button" onclick="showContent('grades')">Grades</button>
-            </div>
-        </div>
-        <div class="button-content" id="discussions">
-            
-            <!-- Display existing discussions -->
-            <div class="existing-discussions">
-                {% for discussion in discussions %}
-                    <div class="discussion" style="border: 2px solid black; border-radius: 15px;background-color: rgb(66, 66, 66);">
-                        <h3>{{ discussion.subject }}</h3>
-                        <p>{{ discussion.message }}</p>
-                        <!-- You can also display the author and date if needed -->
-                    </div><br>
-                {% empty %}
-                    <p>No discussions available.</p>
-                {% endfor %}
-            </div>
-            
-            <!-- Create a new discussion form -->
-            <div class="new-discussion-form">
-                <h3>Create a New Discussion</h3>
-                <form method="post" action="{% url 'students:create_discussion' %}">
-                    {% csrf_token %}
-                    <label for="subject">Subject:</label><br>
-                    <input type="text" id="subject" name="subject" required><br>
-                    <label for="message">Message:</label><br>
-                    <textarea id="message" name="message" rows="4" required></textarea><br><br>
-                    <input type="submit" class="btn btn-secondary btn-block" value="Create Discussion">
-                </form>
-            </div>
-            
-        </div>
-        
-        <div class="button-content" id="quizzes">
-            <!-- Content for Quizzes button -->
-            <div class="quiz-container">
-                {% if quizzes %}
-                    {% for quiz in quizzes %}
-                        <form method="post" action="{% url 'students:submit_quiz' quiz.id %}">
-                            {% csrf_token %}
-                            <div class="question" style="padding: 15px;border: 2px solid black; border-radius: 15px;background-color: #000000;">
-                                <p>{{ quiz.title }}</p>
-                                <div class="options">
-                                    <label>
-                                        <input type="radio" name="{{ quiz.id }}" value="1">
-                                        {{ quiz.Num1 }}
-                                    </label>
-                                    <label>
-                                        <input type="radio" name="{{ quiz.id }}" value="2">
-                                        {{ quiz.Num2 }}
-                                    </label>
-                                    <label>
-                                        <input type="radio" name="{{ quiz.id }}" value="3">
-                                        {{ quiz.Num3 }}
-                                    </label>
-                                    <label>
-                                        <input type="radio" name="{{ quiz.id }}" value="4">
-                                        {{ quiz.Num4 }}
-                                    </label>
-                                </div>
-                                <input type="submit" class="btn btn-secondary btn-block" value="submit_quiz">
-                            </div>
-                        </form><br>
-                    {% endfor %}
-                {% else %}
-                <h2>*No Quizzes Available*</h2>
-                {% endif %}
-            </div>
-            
-        </div>
-        <div class="button-content" id="grades">
-            
-            <!-- Display the student's grades -->
-            <div class="student-grades">
-                {% if student_grades %}
-                    <table class="table table-bordered" style="background-color: #c1c1c1;">
-                        <thead>
-                            <tr>
-                                <th>Quiz</th>
-                                <th>Grade</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for grade in student_grades %}
-                                <tr>
-                                    <td>{{ grade.quiz.title }}</td>
-                                    <td>%{{ grade.grade }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                    <h5>Overall Average: %{{  final_grade }}</h5>
-                {% else %}
-                    <p>No grades available.</p>
-                {% endif %}
-            </div>
-        </div>
-        
+        {% block content %}{% endblock %}
     </div>
     <div class="footer">
         &copy; 2023 Marcus Allen
@@ -201,7 +120,7 @@
 
             // Show the selected button content
             var selectedContent = document.getElementById(contentId);
-            selectedContent.classList.add('active');
+            selectedContent.classList.add('active);
         }
     </script>
 </body>

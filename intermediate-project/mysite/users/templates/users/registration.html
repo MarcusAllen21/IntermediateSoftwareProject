@@ -70,8 +70,9 @@
                         {% csrf_token %}
                         {{ form.as_p }}
                         {{ account_form.as_p }}
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary btn-block">Register</button>
+                        <div class="form-group text-center"> <!-- Center-align the content -->
+                            <button type="submit" class="btn btn-primary btn-block">Register</button><br>
+                            <a href="{% url 'users:login_page' %}" style="text-decoration: none; color: rgb(128, 128, 128);">- Already Have Account -</a>
                         </div>
                     </form>
                 </div>

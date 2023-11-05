@@ -1,101 +1,48 @@
-from django.shortcuts import render
-from django.shortcuts import render, redirect
-from django.urls import reverse
-from teachers.models import Quiz, Grade, Discussion
-from django.contrib.auth import logout
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.db.models import Avg
-from django.db.models import OuterRef, Subquery
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from .models import Quiz, Grade, Discussion, Question, Option
+from .forms import QuestionForm, OptionForm, QuizForm
+from django.http import HttpResponse
+from django.http import JsonResponse
+import json
+from django.forms import formset_factory
+from django.forms.formsets import formset_factory, BaseFormSet
 
-# Create your views here.
 def index(request):
-
-    teacher = request.user
-
-    discussions = Discussion.objects.all()
+    quizzes = Quiz.objects.all()
     grades = Grade.objects.all()
-
-    # Create a subquery to get graded quizzes for the current student
-    graded_quizzes = Grade.objects.filter(quiz=OuterRef('pk'))
-
-    # Query quizzes that don't have a corresponding grade for the current student
-    ungraded_quizzes = Quiz.objects.annotate(
-        has_grade=Subquery(graded_quizzes.values('quiz'))
-    ).filter(has_grade=None)
 
     composite = 0
     for grade in grades:
         composite += grade.grade
 
     if composite != 0:
-        composite = composite / int(len(grades))
+        composite = composite / len(grades)
     else:
         composite = 0
 
     context = {
-        'discussions': discussions,
-        'quizzes': ungraded_quizzes,
+        'quizzes': quizzes,
         'student_grades': grades,
         'final_grade': composite,
     }
     return render(request, "teachers/index.html", context)
 
-def teacher_dashboard(request):
-    # Retrieve quizzes created by the teacher
-    quizzes = Quiz.objects.filter(author=request.user)
-
-    # Retrieve average quiz scores for each quiz
-    quiz_scores = {}
-    for quiz in quizzes:
-        quiz_scores[quiz.id] = Grade.objects.filter(quiz=quiz).aggregate(Avg('grade'))['grade__avg']
-
-    context = {
-        'quizzes': quizzes,
-        'quiz_scores': quiz_scores,
-    }
-    return render(request, "teachers/index.html", context)
-
 def view_quiz_results(request, quiz_id):
-    # Retrieve the quiz
     quiz = Quiz.objects.get(pk=quiz_id)
-
-    # Retrieve all the grades for this quiz
     grades = Grade.objects.filter(quiz=quiz)
-
     context = {
         'quiz': quiz,
         'grades': grades,
     }
-    return render(request, "teachers/index.html", context)
-
-def create_quiz(request):
-    if request.method == 'POST':
-        # Process form data to create a new quiz
-        title = request.POST.get('title')
-        answ1 = request.POST.get('answ1')
-        answ2 = request.POST.get('answ2')
-        answ3 = request.POST.get('answ3')
-        answ4 = request.POST.get('answ4')
-        correct = request.POST.get('CA')
-        Quiz.objects.create(
-            title=title,
-            Num1=answ1,
-            Num2=answ2,
-            Num3=answ3,
-            Num4=answ4,
-            correct_answer=correct,
-            author=request.user
-        )
-        messages.success(request, 'Quiz created successfully.')
-        return redirect('teachers:index')
-
-    return render(request, "teachers/index.html")
+    return render(request, "teachers/view_quiz_results.html", context)
 
 def create_discussion(request):
     if request.method == 'POST':
         subject = request.POST.get('subject')
         message = request.POST.get('message')
-        file = request.FILES.get('file')  # Get the uploaded file
+        file = request.FILES.get('file')
         author = request.user
 
         parent_post_id = request.POST.get('parent_post')
@@ -105,7 +52,7 @@ def create_discussion(request):
             try:
                 parent_post = Discussion.objects.get(pk=parent_post_id)
             except Discussion.DoesNotExist:
-                pass  # Handle the case where the parent post does not exist
+                pass
 
         discussion = Discussion.objects.create(
             subject=subject,
@@ -115,10 +62,128 @@ def create_discussion(request):
             parent_post=parent_post,
         )
         messages.success(request, 'Discussion created successfully.')
-        return redirect('students:index')  # Redirect to the discussions page
+        return redirect('teachers:index')
 
-    return redirect('students:index')
+    return render(request, "teachers/create_discussion.html")
 
-def logout_page(request):
-    logout(request)
-    return redirect(reverse('login'))
+def created_quizzes(request):
+    quizzes = Quiz.objects.all()
+
+    quiz_data = []
+    for quiz in quizzes:
+        questions = Question.objects.filter(quiz=quiz)
+        grades = Grade.objects.filter(quiz=quiz)
+        total_score = sum(grade.grade for grade in grades)
+        average_score = total_score / len(grades) if len(grades) > 0 else 0
+
+        quiz_data.append({
+            'quiz': quiz,
+            'questions': questions,
+            'average_score': average_score,
+        })
+
+    context = {
+        'quiz_data': quiz_data,
+    }
+
+    return render(request, "teachers/created_quizzes.html", context)
+
+def created_discussions(request):
+    discussions = Discussion.objects.filter(author=request.user)
+    context = {
+        'discussions': discussions,
+    }
+    return render(request, "teachers/created_discussions.html", context)
+
+def create_quiz(request):
+    if request.method == 'POST':
+        quiz_form = QuizForm(request.POST)
+        num_questions = int(request.POST.get('num_questions'))
+        if quiz_form.is_valid():
+            quiz = quiz_form.save(commit=False)
+            quiz.author = request.user
+            quiz.save()
+            for i in range(num_questions):
+                question_form = QuestionForm(request.POST, prefix=f'question_{i}')
+                if question_form.is_valid():
+                    question = question_form.save(commit=False)
+                    question.quiz = quiz
+                    question.save()
+                    option_valid = True
+                    for j in range(4):  # Assuming you have 4 options for each question
+                        option_form = OptionForm(request.POST, id='option_{i}_{j}_text')
+                        if not option_form.is_valid():
+                            option_valid = False
+                            print(f"Failed to create option {j} for question {i} with error: {option_form.errors}")
+                            messages.error(request, f'Failed to create options for question {i}. Please check your input.')
+                            break
+                        option = option_form.save(commit=False)
+                        option.question = question
+                        option.save()
+                    if not option_valid:
+                        break
+                    correct_option_index = request.POST.get(f'correct_option_{i}')
+                    question.correct_option = question.options.all()[int(correct_option_index)]
+                    question.save()
+                else:
+                    print(f"Failed to create question {i} with error: {question_form.errors}")
+                    messages.error(request, f'Failed to create questions. Please check your input.')
+                    break
+            messages.success(request, 'Quiz and questions created successfully.')
+            return JsonResponse({'success': True})
+        else:
+            print(f"Failed to create quiz with error: {quiz_form.errors}")
+            messages.error(request, 'Failed to create the quiz. Please check your input.')
+    else:
+        quiz_form = QuizForm()
+        context = {
+            'quiz_form': quiz_form,
+        }
+        return render(request, "teachers/create_quiz.html", context)
+
+    return render(request, "teachers/create_quiz.html")
+
+def manage_questions(request, quiz_id):
+    quiz = get_object_or_404(Quiz, pk=quiz_id)
+    questions = Question.objects.filter(quiz=quiz)
+    context = {
+        'quiz': quiz,
+        'questions': questions,
+    }
+    return render(request, "teachers/manage_questions.html", context)
+
+def search_quizzes(request):
+    query = request.GET.get('q')
+    quizzes = Quiz.objects.filter(title__icontains=query)
+    return render(request, 'teachers/search_quizzes.html', {'quizzes': quizzes, 'query': query})
+
+def search_discussions(request):
+    query = request.GET.get('q')
+    discussions = Discussion.objects.filter(subject__icontains=query)
+    return render(request, 'teachers/search_discussions.html', {'discussions': discussions, 'query': query})
+
+def paginated_quizzes(request):
+    quizzes = Quiz.objects.all()
+    paginator = Paginator(quizzes, 10)
+    page = request.GET.get('page')
+    try:
+        quizzes = paginator.page(page)
+    except PageNotAnInteger:
+        quizzes = paginator.page(1)
+    except EmptyPage:
+        quizzes = paginator.page(paginator.num_pages)
+    return render(request, 'teachers/paginated_quizzes.html', {'quizzes': quizzes})
+
+def view_quiz_chart(request, quiz_id):
+    quiz = get_object_or_404(Quiz, pk=quiz_id)
+    grades = Grade.objects.filter(quiz=quiz)
+
+    student_names = [grade.student.username for grade in grades]
+    student_grades = [grade.grade for grade in grades]
+
+    chart_data = {
+        'labels': student_names,
+        'data': student_grades,
+    }
+
+    return render(request, "teachers/view_quiz_chart.html", {'quiz': quiz, 'chart_data': json.dumps(chart_data)})

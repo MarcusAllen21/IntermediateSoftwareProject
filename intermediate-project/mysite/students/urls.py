@@ -6,6 +6,8 @@ app_name = "students"
 
 urlpatterns = [
     path("", views.index, name="index"),
-    path("submit_quiz/<str:id>/", views.submit_quiz, name="submit_quiz"),
-    path("create_discussion/", views.create_discussion, name="create_discussion"),
+    path('create_discussion/', views.create_discussion, name='create_discussion'),
+    path('created_discussions/', views.discussions, name='discussions'),
+    path('quizzes/<int:quiz_id>/', views.quizzes, name='quizzes'),
+    path('grades/', views.grades, name='grades'),
 ]
