@@ -8,6 +8,7 @@ from django.http import JsonResponse
 import json
 from django.db.models import Avg
 from decimal import Decimal
+from django.views.decorators.csrf import csrf_protect
 
 def index(request):
     context = {}
@@ -109,7 +110,6 @@ def student_has_exceeded_attempts_for_question(student, question):
 def student_has_completed_quiz(student, quiz):
     # Check if the student has completed the quiz (e.g., answered all questions)
     total_questions = quiz.question_set.count()
-    print(total_questions)
     Grade.objects.filter(student=student, quiz=quiz).count()
     return Grade.objects.filter(student=student, quiz=quiz).count() >= total_questions
 
@@ -156,8 +156,9 @@ def take_quiz(request, quiz_id):
 
     if request.method == 'POST':
         # Process the submitted quiz answers and update question-wise correctness
+        grade, created = Grade.objects.get_or_create(student=request.user, quiz=quiz)
+        submission_attempts = grade.submission_attempts
         total_score = 0
-        submission_attempts = 0  # Initialize submission attempts
         question_responses = {}  # Initialize question-wise correctness
 
         for question in quiz.question_set.all():
@@ -166,9 +167,10 @@ def take_quiz(request, quiz_id):
                 option = Option.objects.get(pk=option_id)
                 is_correct = option.is_correct
                 total_score += 1 if is_correct else 0
-                submission_attempts += 1  # Increment submission attempts
                 question_responses[str(question.id)] = is_correct  # Update question-wise correctness
 
+        submission_attempts += 1  # Increment submission attempts
+        
         # Update the Grade entry with the question-wise correctness
         grade, created = Grade.objects.get_or_create(student=request.user, quiz=quiz, defaults={'submission_attempts': submission_attempts})
         if not created:
