@@ -70,92 +70,7 @@ def quizzes(request):
     return render(request, 'students/quizzes.html', context)
 
 
-def take_quiz(request, quiz_id):
-    # Retrieve the quiz object
-    quiz = get_object_or_404(Quiz, id=quiz_id)
 
-    # Check if there are questions associated with this quiz
-    questions = Question.objects.filter(quiz=quiz)
-
-    if not questions:
-        # Handle the case where there are no questions for the quiz
-        return render(request, 'students/quizzes.html')
-
-    # Check if the student has exceeded the maximum number of attempts
-    if student_has_exceeded_attempts(request.user, quiz):
-        return render(request, 'students/quizzes.html')
-
-    if request.method == 'POST':
-        # Check if the student has completed the quiz
-        if student_has_completed_quiz(request.user, quiz):
-            # Redirect back to the list of quizzes
-            return redirect('students:quizzes')
-
-        # Create an empty list to store the student's answers
-        student_answers = []
-        print(questions)
-        # Process each question and answer
-        for question in questions:
-            print("test")
-            options = Option.objects.filter(question=question)
-            question_form = AnswerForm(request.POST, prefix=f'question_{question.id}')
-            question_form.fields['selected_option'].queryset = options
-            if question_form.is_valid():
-                # Process the submitted answer
-                option_id = question_form.cleaned_data.get('selected_option')
-                option = get_object_or_404(Option, id=option_id)
-
-                # Save the student's answer
-                student_answers.append({
-                    'question': question,
-                    'selected_option': option,
-                })
-
-        # Calculate the grade for the quiz and store the results
-        total_score = 0
-        for answer in student_answers:
-            if answer['selected_option'] and answer['selected_option'].is_correct:
-                total_score += 1  # Adjust scoring logic as needed
-
-        grade = Grade.objects.create(
-            student=request.user,
-            quiz=quiz,
-            grade=total_score,  # Adjust grading logic as needed
-        )
-        print("test")
-        # Increment the number of attempts
-        increment_attempts(request.user, quiz)
-
-        # Check if the student has exceeded the maximum number of attempts after this attempt
-        if student_has_exceeded_attempts(request.user, quiz):
-            return render(request, 'students/quiz_unavailable.html')
-
-        # Redirect back to the list of quizzes
-        return redirect('students:quizzes')
-
-    else:
-        # Display the quiz questions to the student
-        question_forms = []
-
-        for question in questions:
-            options = Option.objects.filter(question=question)
-            question_form = AnswerForm(prefix=f'question_{question.id}')
-            question_form.fields['selected_option'].queryset = options
-            question_forms.append({
-                'question': question,
-                'options': options,
-                'form': question_form,
-            })
-
-        context = {
-            'quiz': quiz,
-            'question_forms': question_forms,
-        }
-        return render(request, 'students/take_quiz.html', context)
-
-def increment_attempts(request, user, quiz):
-    # Use F expressions to increment "submission attempts" in the database
-    Grade.objects.update_or_create(student=user, quiz=quiz, defaults={'submission_attempts': F('submission_attempts') + 1})
 
 def grades(request):
     student = request.user
@@ -217,3 +132,73 @@ def student_grades(request):
     }
 
     return render(request, 'students/grades.html', context)
+
+import json
+
+def take_quiz(request, quiz_id):
+    # Retrieve the quiz
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+
+    # Check if the student has exceeded the maximum number of attempts for the entire quiz
+    if student_has_exceeded_attempts(request.user, quiz):
+        messages.error(request, 'You have exceeded the maximum number of quiz attempts.')
+        return redirect('students:quizzes')
+
+    # Retrieve the questions for the quiz and create forms for each question
+    question_forms = []
+    for question in quiz.question_set.all():
+        options = Option.objects.filter(question=question)
+        question_form = {
+            'question': question,
+            'options': options,
+        }
+        question_forms.append(question_form)
+
+    if request.method == 'POST':
+        # Process the submitted quiz answers and update question-wise correctness
+        total_score = 0
+        submission_attempts = 0  # Initialize submission attempts
+        question_responses = {}  # Initialize question-wise correctness
+
+        for question in quiz.question_set.all():
+            option_id = request.POST.get(f'question_{question.id}')
+            if option_id:
+                option = Option.objects.get(pk=option_id)
+                is_correct = option.is_correct
+                total_score += 1 if is_correct else 0
+                submission_attempts += 1  # Increment submission attempts
+                question_responses[str(question.id)] = is_correct  # Update question-wise correctness
+
+        # Update the Grade entry with the question-wise correctness
+        grade, created = Grade.objects.get_or_create(student=request.user, quiz=quiz, defaults={'submission_attempts': submission_attempts})
+        if not created:
+            grade.grade = None  # Reset the grade
+            grade.submission_attempts = submission_attempts
+        grade.question_responses = json.dumps(question_responses)  # Store question-wise correctness as JSON
+        grade.save()
+
+        # Check if the student has completed the quiz
+        if student_has_completed_quiz(request.user, quiz):
+            messages.success(request, 'Quiz submitted successfully. You have completed the quiz.')
+
+            # Calculate the average score by subject
+            subject = quiz.subject
+            subject_grades = Grade.objects.filter(student=request.user, quiz__subject=subject)
+            total_attempts = subject_grades.count()
+            average_score = Decimal(total_score) / Decimal(total_attempts) * 100 if total_attempts > 0 else 0
+            # Update the Grade entry for the subject with the calculated average score
+            grade.grade = average_score
+            grade.save()
+        else:
+            messages.success(request, 'Quiz submitted successfully. Continue to the next question.')
+
+        return redirect('students:quizzes')
+
+    context = {
+        'quiz': quiz,
+        'question_forms': question_forms,
+    }
+
+    return render(request, 'students/take_quiz.html', context)
+
+

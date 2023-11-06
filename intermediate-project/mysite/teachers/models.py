@@ -5,6 +5,7 @@ class Quiz(models.Model):
     title = models.CharField(max_length=255)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     subject = models.CharField(max_length=255, default="Math")
+    question_responses = models.JSONField(default=dict)
     # Other fields related to the quiz
 
 class Question(models.Model):
@@ -24,8 +25,8 @@ class Option(models.Model):
 class Grade(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE)
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
-    grade = models.DecimalField(max_digits=5, decimal_places=2)
-    submission_attempts = models.PositiveIntegerField(default=0)  # Add this field for submission attempts
+    grade = models.DecimalField(max_digits=5, decimal_places=2, null=True)  # Nullable grade
+    submission_attempts = models.PositiveIntegerField(default=0)  # Submission attempts
 
     def __str__(self):
         return f"{self.student.username} - {self.quiz.title}"
@@ -38,3 +39,4 @@ class Discussion(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     parent_post = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE)
     # Other fields related to the discussion
+
