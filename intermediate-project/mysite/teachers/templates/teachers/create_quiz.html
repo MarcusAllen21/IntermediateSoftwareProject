@@ -1,252 +1,206 @@
 {% extends "teachers/index.html" %}
 
 {% block content %}
-  <style>
-    /* Define the scrollbar styles */
-    ::-webkit-scrollbar {
-      width: 12px; /* Width of the scrollbar */
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #888; /* Color of the thumb */
-      border-radius: 6px; /* Rounded corners of the thumb */
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: #555; /* Color of the thumb on hover */
-    }
-
-    ::-webkit-scrollbar-track {
-      background: #eee; /* Color of the track */
-      border-radius: 6px; /* Rounded corners of the track */
-    }
-
-    /* Apply these styles to an element with the class 'custom-scrollbar' */
-    .custom-scrollbar {
-      max-height: 450px;
-      overflow-y: auto;
-      overflow-x: hidden;
-      scrollbar-width: thin; /* For Firefox */
-      scrollbar-color: #888 #eee; /* For Firefox */
-    }
-
-    /* Adjust spacing between input fields and scrollbar */
-    .question-group {
-      margin-bottom: 20px; /* Add some space between question groups */
-    }
-  </style>
-
-  <div class="container">
-    <div class="row">
-      <div class="col-md-12 text-center">
-        <h3>Create Quiz</h3>
-      </div>
-      <div class="col-md-12 text-center">
-        <form method="post" id="quiz-form">
-          {% csrf_token %}
-          {{ quiz_form.as_table }}
-          <input type="hidden" name="num_questions" id="num-questions" value="5"> <!-- Change the value to 5 -->
-          <button type="button" id="add-question" class="btn btn-secondary btn-block">Add Question</button>
-          <button type="button" onclick="" id="create-quiz" class="btn btn-success btn-block">Create Quiz</button>
-        </form>
-      </div>
+<div class="container">
+  <div class="row">
+    <div class="col-md-12 text-center">
+      <h3></h3>
     </div>
+    <div class="col-md-12 text-center">
+      <ul class="nav nav-tabs" id="quizTabs" role="tablist" style="background-color: rgb(172, 172, 172);">
+        <li class="nav-item" role="presentation">
+          <a class="nav-link active" id="question-1-tab" data-toggle="tab" href="#question-1" role="tab" aria-controls="question-1" aria-selected="true">Question 1</a>
+        </li>
+      </ul>
 
-    <div class="row">
-      <div class="col-md-12">
-        <div class="custom-scrollbar" id="questions-container">
-          <!-- Initial questions (Questions 1 to 5) are hardcoded here -->
-          <!-- Question 1 -->
-          <div class="question-group" id="question-1">
-            <h3>Question 1</h3>
+      <form method="post" id="quiz-form" class="mt-2">
+        {% csrf_token %}
+        {{ quiz_form.as_table }}
+        {{ subject_form.subject.label_tag }}
+        {{ subject_form.subject }}
+
+        <div class="tab-content" id="quizTabsContent">
+            <!-- Question 1 Tab -->
+            <div class="tab-pane fade show active" id="question-1" role="tabpanel" aria-labelledby="question-1-tab">
+                <div class="question-group">
+                    <h3>Question 1</h3>
+                    <div class="form-row mt-3">
+                        <div class="form-group col-md-12">
+                            <label for="questions_1_text">Question Text</label>
+                            <input class="form-control" id="questions-1_text" name="questions_1_text">
+                        </div>
+                    </div>
+                    <h4>Options</h4>
+                    <!-- Option fields for Question 1 -->
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <div class="form-group">
+                                <label for="options_1_0_text">Option 1 Text</label>
+                                <input type="text" class="form-control" id="options-1_0_text" name="options_1_0_text">
+                            </div>
+                            <div class="form-group">
+                                <label for="options_1_0_is_correct">Is Correct</label>
+                                <input type="checkbox" id="options-1_0_is_correct" name="correct_options_1">
+                            </div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group">
+                                <label for="options_1_1_text">Option 2 Text</label>
+                                <input type="text" class="form-control" id="options-1_1_text" name="options_1_1_text">
+                            </div>
+                            <div class="form-group">
+                                <label for="options_1_1_is_correct">Is Correct</label>
+                                <input type="checkbox" id="options-1_1_is_correct" name="correct_options_1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <div class="form-group">
+                                <label for="options_1_2_text">Option 3 Text</label>
+                                <input type="text" class="form-control" id="options-1_2_text" name="options_1_2_text">
+                            </div>
+                            <div class="form-group">
+                                <label for="options_1_2_is_correct">Is Correct</label>
+                                <input type="checkbox" id="options-1_2_is_correct" name="correct_options_1">
+                            </div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <div class="form-group">
+                                <label for="options_1_3_text">Option 4 Text</label>
+                                <input type="text" class="form-control" id="options-1_3_text" name="options_1_3_text">
+                            </div>
+                            <div class "form-group">
+                                <label for="options_1_3_is_correct">Is Correct</label>
+                                <input type="checkbox" id="options-1_3_is_correct" name="correct_options_1">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-secondary add-question">Add Question</button>
+        <!-- Include a submit button to submit the form -->
+        <button type="submit" class="btn btn-success btn-block mt-4">Create Quiz</button>
+    </form>
+    
+    </div>
+  </div>
+</div>
+
+<script>
+  $(document).ready(function () {
+    // Initialize the tab count
+    var questionCount = 1;
+
+    // Add a new question tab
+    $('.add-question').on('click', function () {
+      questionCount++;
+      var newTab = `
+        <li class="nav-item" role="presentation">
+          <a class="nav-link" id="question-${questionCount}-tab" data-toggle="tab" href="#question-${questionCount}" role="tab" aria-controls="question-${questionCount}" aria-selected="false">Question ${questionCount}</a>
+        </li>
+      `;
+
+      var newQuestionTab = `
+        <div class="tab-pane fade" id="question-${questionCount}" role="tabpanel" aria-labelledby="question-${questionCount}-tab">
+          <div class="question-group">
+            <h3>Question ${questionCount}</h3>
             <button type="button" class="btn btn-danger remove-question">Remove Question</button>
             <div class="form-row mt-3">
               <div class="form-group col-md-12">
-                <label for="questions_1_text">Question Text</label>
-                <textarea class="form-control" id="questions_1_text" name="questions_1_text"></textarea>
-                <label for="questions_1_subject">Subject</label>
-                <select class="form-control" id="questions_1_subject" name="questions_1_subject">
-                  <option value="Math">Math</option>
-                  <option value="English">English</option>
-                  <option value="Science">Science</option>
-                  <option value="History">History</option>
-                </select>
-              </div>
-            </div>
-            <h4>Options</h4>
-            <!-- Option fields for Question 1 -->
-            <div class="form-row">
-              <div class="form-group col-md-6">
-                <div class="form-group">
-                  <label for="options_1_0_text">Option 1 Text</label>
-                  <input type="text" class="form-control" id="options_1_0_text" name="options_1_0_text">
-                </div>
-                <div class="form-group">
-                  <label for="options_1_0_is_correct">Is Correct</label>
-                  <input type="checkbox" id="options_1_0_is_correct" name="options_1_0_is_correct">
-                </div>
-              </div>
-              <div class="form-group col-md-6">
-                <div class="form-group">
-                  <label for="options_1_1_text">Option 2 Text</label>
-                  <input type="text" class="form-control" id="options_1_1_text" name="options_1_1_text">
-                </div>
-                <div class="form-group">
-                  <label for="options_1_1_is_correct">Is Correct</label>
-                  <input type="checkbox" id="options_1_1_is_correct" name="options_1_1_is_correct">
-                </div>
+                <label for="questions_{{ questionCount }}_text">Question Text</label>
+                <input class="form-control" id="questions-{{ questionCount }}_text" name="questions_{{ questionCount }}_text">
+                <label for="questions_{{ questionCount }}_subject">Subject</label>
+                  <select class="form-control" id="questions-{{ questionCount }}_subject" name="questions_{{ questionCount }}_subject">
+                    <option value="Math">Math</option>
+                    <option value="English">English</option>
+                    <option value="Science">Science</option>
+                    <option value="History">History</option>
+                  </select>
               </div>
             </div>
             <div class="form-row">
               <div class="form-group col-md-6">
                 <div class="form-group">
-                  <label for="options_1_2_text">Option 3 Text</label>
-                  <input type="text" class="form-control" id="options_1_2_text" name="options_1_2_text">
+                  <label for="options_{{ questionCount }}_0_text">Option 1 Text</label>
+                  <input type="text" class="form-control" id="options-{{ questionCount }}_0_text" name="options_{{ questionCount }}_0_text">
                 </div>
                 <div class="form-group">
-                  <label for="options_1_2_is_correct">Is Correct</label>
-                  <input type="checkbox" id="options_1_2_is_correct" name="options_1_2_is_correct">
+                  <label for="options_{{ questionCount }}_0_is_correct">Is Correct</label>
+                  <input type="checkbox" id="options-{{ questionCount }}_0_is_correct" name="correct_options_{{ questionCount }}">
                 </div>
               </div>
               <div class="form-group col-md-6">
                 <div class="form-group">
-                  <label for="options_1_3_text">Option 4 Text</label>
-                  <input type="text" class="form-control" id="options_1_3_text" name="options_1_3_text">
+                  <label for="options_{{ questionCount }}_1_text">Option 2 Text</label>
+                  <input type="text" class="form-control" id="options-{{ questionCount }}_1_text" name="options_{{ questionCount }}_1_text">
                 </div>
                 <div class="form-group">
-                  <label for="options_1_3_is_correct">Is Correct</label>
-                  <input type="checkbox" id="options_1_3_is_correct" name="options_1_3_is_correct"
+                  <label for="options_{{ questionCount }}_1_is_correct">Is Correct</label>
+                  <input type="checkbox" id="options-{{ questionCount }}_1_is_correct" name="correct_options_{{ questionCount }}">
                 </div>
               </div>
             </div>
+            <div class="form-row">
+              <div class="form-group col-md-6">
+                <div class="form-group">
+                  <label for="options_{{ questionCount }}_2_text">Option 3 Text</label>
+                  <input type="text" class="form-control" id="options-{{ questionCount }}_2_text" name="options_{{ questionCount }}_2_text">
+                </div>
+                <div class="form-group">
+                  <label for="options_{{ questionCount }}_2_is_correct">Is Correct</label>
+                  <input type="checkbox" id="options-{{ questionCount }}_2_is_correct" name="correct_options_{{ questionCount }}">
+                </div>
+              </div>
+              <div class="form-group col-md-6">
+                <div class="form-group">
+                  <label for="options_{{ questionCount }}_3_text">Option 4 Text</label>
+                  <input type="text" class="form-control" id="options-{{ questionCount }}_3_text" name="options_{{ questionCount }}_3_text">
+                </div>
+                <div class="form-group">
+                  <label for="options_{{ questionCount }}_3_is_correct">Is Correct</label>
+                  <input type="checkbox" id="options-{{ questionCount }}_3_is_correct" name="correct_options_{{ questionCount }}">
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
-      </div>
-    </div>
-  </div>
+      `;
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const addQuestionButton = document.getElementById("add-question");
-      const questionsContainer = document.getElementById("questions-container");
-      const numQuestionsInput = document.getElementById("num-questions");
-      const createQuizButton = document.getElementById("create-quiz");
-      const quizForm = document.getElementById("quiz-form");
-  
-      // Initially, there are 5 hardcoded questions
-      let questionCount = 1;
-  
-      addQuestionButton.addEventListener("click", function () {
-        questionCount++;
-        numQuestionsInput.value = questionCount;
-  
-        const questionGroup = document.createElement("div");
-        questionGroup.classList.add("question-group");
-        questionGroup.id = `question-${questionCount}`;
-        questionGroup.innerHTML = `
-          <h3>Question ${questionCount}</h3>
-          <button type="button" class="btn btn-danger remove-question">Remove Question</button>
-          <div class="form-row mt-3">
-            <div class="form-group col-md-12">
-              <label for="questions_${questionCount}_text">Question Text</label>
-              <textarea class="form-control" id="questions_${questionCount}_text" name="questions_${questionCount}_text" required></textarea>
-              <label for="questions_${questionCount}_subject">Subject</label>
-              <select class="form-control" id="questions_${questionCount}_subject" name="questions_${questionCount}_subject">
-                <option value="Math">Math</option>
-                <option value="English">English</option>
-                <option value="Science">Science</option>
-                <option value="History">History</option>
-              </select>
-            </div>
-          </div>
-          <h4>Options</h4>
-          <div class="form-row">
-            <div class="form-group col-md-6">
-              <div class="form-group">
-                <label for="options_${questionCount}_0_text">Option 1 Text</label>
-                <input type="text" class="form-control" id="options_${questionCount}_0_text" name="options_${questionCount}_0_text" required>
-              </div>
-              <div class="form-group">
-                <label for="options_${questionCount}_0_is_correct">Is Correct</label>
-                <input type="checkbox" id="options_${questionCount}_0_is_correct" name="options_${questionCount}_0_is_correct" required>
-              </div>
-            </div>
-            <div class="form-group col-md-6">
-              <div class="form-group">
-                <label for="options_${questionCount}_1_text">Option 2 Text</label>
-                <input type="text" class="form-control" id="options_${questionCount}_1_text" name="options_${questionCount}_1_text" required>
-              </div>
-              <div class="form-group">
-                <label for="options_${questionCount}_1_is_correct">Is Correct</label>
-                <input type="checkbox" id="options_${questionCount}_1_is_correct" name="options_${questionCount}_1_is_correct" required>
-              </div>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group col-md-6">
-              <div class="form-group">
-                <label for="options_${questionCount}_2_text">Option 3 Text</label>
-                <input type="text" class="form-control" id="options_${questionCount}_2_text" name="options_${questionCount}_2_text" required>
-              </div>
-              <div class="form-group">
-                <label for="options_${questionCount}_2_is_correct">Is Correct</label>
-                <input type="checkbox" id="options_${questionCount}_2_is_correct" name="options_${questionCount}_2_is_correct" required>
-              </div>
-            </div>
-            <div class="form-group col-md-6">
-              <div class="form-group">
-                <label for="options_${questionCount}_3_text">Option 4 Text</label>
-                <input type="text" class="form-control" id="options_${questionCount}_3_text" name="options_${questionCount}_3_text" required>
-              </div>
-              <div class="form-group">
-                <label for="options_${questionCount}_3_is_correct">Is Correct</label>
-                <input type="checkbox" id="options_${questionCount}_3_is_correct" name="options_${questionCount}_3_is_correct" required>
-              </div>
-            </div>
-          </div>
-        `;
-  
-        questionsContainer.appendChild(questionGroup);
-  
-        const removeButtons = questionsContainer.querySelectorAll(".remove-question");
-        removeButtons.forEach((button) => {
-          button.addEventListener("click", () => {
-            const questionToRemove = document.getElementById(button.parentNode.id);
-            questionsContainer.removeChild(questionToRemove);
-            questionCount--;
-            numQuestionsInput.value = questionCount;
-          });
-        });
-      });
-  
-      createQuizButton.addEventListener("click", function () {
-        // Gather and post the form data using JavaScript
-        const formData = new FormData(quizForm);
-        const url = '{% url "teachers:create_quiz" %}';
-  
-        fetch(url, {
-          method: 'POST',
-          body: formData,
-        })
-          .then(response => response.json())
-          .then(data => {
-            // Handle the response as needed (e.g., display a success message).
-            // Clear the form fields upon successful submission.
-            if (data.success) {
-              document.querySelector('form').reset(); // Reset the form
-              questionCount = 1; // Reset the question count to 1
-              numQuestionsInput.value = questionCount;
-              questionsContainer.innerHTML = ''; // Clear the added questions
-  
-              // Reload the page after a short delay
-              setTimeout(() => {
-                window.location.reload();
-              }, 1000); // Refresh the page after 1 second (adjust as needed)
-            }
-          })
-          .catch(error => console.error('Error:', error));
-      });
+      // Append the new question tab to the navigation and content
+      $('#quizTabs').append(newTab);
+      $('#quizTabsContent').append(newQuestionTab);
+
+      // Activate the newly added question tab
+      var newQuestionTabId = `#question-${questionCount}-tab`;
+      $(newQuestionTabId).tab('show');
     });
-  </script>
-  
+
+    // Remove a question tab
+    $('#quizTabsContent').on('click', '.remove-question', function () {
+      var tabId = $(this).closest('.tab-pane').attr('id');
+      var questionNumber = tabId.match(/\d+/)[0]; // Extract the question number
+      var questionTabId = `#question-${questionNumber}-tab`;
+
+      // Remove the question tab from the navigation and content
+      $(this).closest('.nav-item').remove();
+      $(tabId).remove();
+
+      // Activate the previous question tab, or the last tab if available
+      var prevQuestionNumber = questionNumber - 1;
+      var prevTabId = `#question-${prevQuestionNumber}-tab`;
+
+      if (prevQuestionNumber > 0) {
+        $(prevTabId).tab('show');
+      } else {
+        // No previous question, so select the last tab
+        var lastTabId = $('#quizTabs .nav-item:last a').attr('id');
+        $(`#${lastTabId}`).tab('show');
+      }
+    });
+  });
+</script>
+
 {% endblock %}

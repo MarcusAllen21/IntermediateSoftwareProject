@@ -7,6 +7,7 @@ from django.http import HttpResponse
 from django.http import JsonResponse
 import json
 from django.db.models import Avg
+from decimal import Decimal
 
 def index(request):
     context = {}
@@ -47,60 +48,114 @@ def discussions(request):
     }
     return render(request, "students/created_discussions.html", context)
 
-def quizzes(request, quiz_id):
-    try:
-        quiz = get_object_or_404(Quiz, pk=quiz_id)
-    except Quiz.DoesNotExist:
-        messages.error(request, 'No quizzes are available.')
-        return redirect('students:index')
 
-    student = request.user
-    form = None  # Initialize the 'form' variable
+def quizzes(request):
+    # Retrieve all quizzes
+    all_quizzes = Quiz.objects.all()
 
-    if request.method == 'POST':
-        # Check if the student has already exceeded max attempts for the entire quiz
-        if student_has_exceeded_attempts(student, quiz):
-            messages.error(request, 'You have exceeded the maximum number of attempts for this quiz.')
-            return redirect('students:quizzes', quiz_id=quiz_id)
+    # Create an empty dictionary to organize quizzes by subject
+    quizzes_by_subject = {}
 
-        question_id = request.POST.get('question_id')
-        question = get_object_or_404(Question, pk=question_id)
+    # Iterate through all quizzes and group them by subject
+    for quiz in all_quizzes:
+        subject = quiz.subject
+        if subject not in quizzes_by_subject:
+            quizzes_by_subject[subject] = []
+        quizzes_by_subject[subject].append(quiz)
 
-        # Check if the student has already exceeded max attempts for the current question
-        if student_has_exceeded_attempts_for_question(student, question):
-            messages.error(request, 'You have exceeded the maximum number of attempts for this question.')
-            return redirect('students:quizzes', quiz_id=quiz_id)
-
-        form = AnswerForm(request.POST, question=question)  # Pass the 'question' to the form
-
-        if form.is_valid():
-            selected_option = form.cleaned_data['selected_option']
-
-            # Check if the selected option is correct
-            is_correct = question.is_correct(selected_option)
-
-            # Create or get a Grade object for the student's attempt on the current question
-            grade, created = Grade.objects.get_or_create(student=student, quiz=quiz, question=question)
-
-            # Update the grade object
-            grade.attempts += 1
-            grade.score = grade.score if created else grade.score + is_correct  # Update score only if not a new attempt
-            grade.save()
-
-            # Check if the student has completed the quiz
-            if student_has_completed_quiz(student, quiz):
-                return redirect('students:quiz_results', quiz_id=quiz_id)
-
-    questions = quiz.question_set.all()
     context = {
-        'quiz': quiz,
-        'questions': questions,
-        'form': form,
+        'quizzes_by_subject': quizzes_by_subject
     }
+
     return render(request, 'students/quizzes.html', context)
 
 
+def take_quiz(request, quiz_id):
+    # Retrieve the quiz object
+    quiz = get_object_or_404(Quiz, id=quiz_id)
 
+    # Check if there are questions associated with this quiz
+    questions = Question.objects.filter(quiz=quiz)
+
+    if not questions:
+        # Handle the case where there are no questions for the quiz
+        return render(request, 'students/quizzes.html')
+
+    # Check if the student has exceeded the maximum number of attempts
+    if student_has_exceeded_attempts(request.user, quiz):
+        return render(request, 'students/quizzes.html')
+
+    if request.method == 'POST':
+        # Check if the student has completed the quiz
+        if student_has_completed_quiz(request.user, quiz):
+            # Redirect back to the list of quizzes
+            return redirect('students:quizzes')
+
+        # Create an empty list to store the student's answers
+        student_answers = []
+        print(questions)
+        # Process each question and answer
+        for question in questions:
+            print("test")
+            options = Option.objects.filter(question=question)
+            question_form = AnswerForm(request.POST, prefix=f'question_{question.id}')
+            question_form.fields['selected_option'].queryset = options
+            if question_form.is_valid():
+                # Process the submitted answer
+                option_id = question_form.cleaned_data.get('selected_option')
+                option = get_object_or_404(Option, id=option_id)
+
+                # Save the student's answer
+                student_answers.append({
+                    'question': question,
+                    'selected_option': option,
+                })
+
+        # Calculate the grade for the quiz and store the results
+        total_score = 0
+        for answer in student_answers:
+            if answer['selected_option'] and answer['selected_option'].is_correct:
+                total_score += 1  # Adjust scoring logic as needed
+
+        grade = Grade.objects.create(
+            student=request.user,
+            quiz=quiz,
+            grade=total_score,  # Adjust grading logic as needed
+        )
+        print("test")
+        # Increment the number of attempts
+        increment_attempts(request.user, quiz)
+
+        # Check if the student has exceeded the maximum number of attempts after this attempt
+        if student_has_exceeded_attempts(request.user, quiz):
+            return render(request, 'students/quiz_unavailable.html')
+
+        # Redirect back to the list of quizzes
+        return redirect('students:quizzes')
+
+    else:
+        # Display the quiz questions to the student
+        question_forms = []
+
+        for question in questions:
+            options = Option.objects.filter(question=question)
+            question_form = AnswerForm(prefix=f'question_{question.id}')
+            question_form.fields['selected_option'].queryset = options
+            question_forms.append({
+                'question': question,
+                'options': options,
+                'form': question_form,
+            })
+
+        context = {
+            'quiz': quiz,
+            'question_forms': question_forms,
+        }
+        return render(request, 'students/take_quiz.html', context)
+
+def increment_attempts(request, user, quiz):
+    # Use F expressions to increment "submission attempts" in the database
+    Grade.objects.update_or_create(student=user, quiz=quiz, defaults={'submission_attempts': F('submission_attempts') + 1})
 
 def grades(request):
     student = request.user
@@ -139,4 +194,26 @@ def student_has_exceeded_attempts_for_question(student, question):
 def student_has_completed_quiz(student, quiz):
     # Check if the student has completed the quiz (e.g., answered all questions)
     total_questions = quiz.question_set.count()
+    print(total_questions)
+    Grade.objects.filter(student=student, quiz=quiz).count()
     return Grade.objects.filter(student=student, quiz=quiz).count() >= total_questions
+
+
+def get_question_somehow(quiz_id, question_id):
+    # Retrieve the quiz
+    quiz = get_object_or_404(Quiz, id=quiz_id)
+
+    # Retrieve the question for the given quiz and question_id
+    question = get_object_or_404(Question, quiz=quiz, id=question_id)
+
+    return question
+
+def student_grades(request):
+    # Retrieve all grades for the current user (student)
+    student_grades = Grade.objects.filter(student=request.user)
+
+    context = {
+        'student_grades': student_grades,
+    }
+
+    return render(request, 'students/grades.html', context)

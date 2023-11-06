@@ -1,0 +1,47 @@
+{% extends "students/index.html" %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Take Quiz: {{ quiz.title }}</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {% for question_form in question_forms %}
+            <div class="question">
+                <h3>{{ question_form.question.text }}</h3>
+                <ul class="options">
+                    {% for option in question_form.options %}
+                        <li>
+                            <label>
+                                <input type="radio" name="question_{{ question_form.question.id }}" value="{{ option.id }}">
+                                {{ option.text }}
+                            </label>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-success btn-block">Submit Answers</button>
+    </form>
+</div>
+
+<style>
+    .question {
+        margin: 20px 0;
+    }
+
+    .question h3 {
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .options {
+        list-style: none;
+        padding: 0;
+    }
+
+    .options li {
+        margin: 5px 0;
+    }
+</style>
+{% endblock %}

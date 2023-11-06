@@ -1,23 +1,90 @@
 {% extends "students/index.html" %}
 
 {% block content %}
-<h1>{{ quiz.title }}</h1>
+<div class="container">
+    <h1>Available Quizzes</h1>
 
-<form method="post">
-    {% csrf_token %}
-    {% for question in questions %}
-        <div class="question">
-            <p>{{ question.text }}</p>
-            <ul class="options">
-                {% for option in question.option_set.all %}
-                    <li>
-                        <input type="radio" name="question_{{ question.id }}" value="{{ option.id }}" id="option_{{ option.id }}">
-                        <label for="option_{{ option.id }}">{{ option.text }}</label>
-                    </li>
-                {% endfor %}
-            </ul>
+    {% if quizzes_by_subject %}
+        <div class="row">
+            {% for subject, quizzes in quizzes_by_subject.items %}
+                <div class="col-md-12">
+                    <h1 class="subject-title text-center">{{ subject }}</h1>
+                    <div class="quiz-list-container" style="max-height: 300px; overflow-y: auto;">
+                        <ul class="quiz-list">
+                            {% for quiz in quizzes %}
+                                <li class="quiz-item">
+                                    <div class="quiz-info text-center mt-3">
+                                        <h5 style="color: black">{{ quiz.title }}</h5>
+                                    </div>
+                                    <div class="">
+                                        <a href="{% url 'students:take_quiz' quiz.id %}" class="btn btn-secondary btn-block">Take Quiz</a>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-    {% endfor %}
-    <button type="submit">Submit</button>
-</form>
+    {% else %}
+        <p class="text-center">No quizzes available at the moment.</p>
+    {% endif %}
+</div>
+
+<style>
+    .subject-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .quiz-list-container {
+        max-height: 300px; /* Set a maximum height for the container */
+        overflow-y: auto; /* Enable vertical scrollbar when content overflows */
+    }
+
+    .quiz-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .quiz-item {
+        background-color: white;
+        border-radius: 10px;
+        border: 2px solid black;
+        padding: 5px;
+        margin: 5px 0; /* Adjust the margin to separate items */
+        transition: background-color 0.3s; /* Add a transition effect for hover */
+    }
+
+    .quiz-item:hover {
+        background-color: #f1f1f1; /* Change the background color on hover */
+    }
+
+    .quiz-info h5 {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    /* Scrollbar Track */
+    ::-webkit-scrollbar {
+        width: 12px; /* Set the width of the scrollbar */
+    }
+
+    /* Scrollbar Handle (thumb) */
+    ::-webkit-scrollbar-thumb {
+        background: #888; /* Background color of the scrollbar handle */
+        border-radius: 6px; /* Rounded corners */
+    }
+
+    /* Scrollbar Track on hover */
+    ::-webkit-scrollbar-track:hover {
+        background: #aaa; /* Background color on hover */
+    }
+
+    /* Scrollbar Handle on hover */
+    ::-webkit-scrollbar-thumb:hover {
+        background: #555; /* Handle background on hover */
+    }
+</style>
+</div>
 {% endblock %}

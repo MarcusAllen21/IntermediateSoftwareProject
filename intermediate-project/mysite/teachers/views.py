@@ -2,12 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .models import Quiz, Grade, Discussion, Question, Option
-from .forms import QuestionForm, OptionForm, QuizForm
-from django.http import HttpResponse
-from django.http import JsonResponse
+from .forms import QuestionForm, OptionForm, QuizForm,SubjectSelectionForm
 import json
-from django.forms import formset_factory
-from django.forms.formsets import formset_factory, BaseFormSet
+from django.views.decorators.csrf import csrf_protect
 
 def index(request):
     quizzes = Quiz.objects.all()
@@ -95,53 +92,67 @@ def created_discussions(request):
     }
     return render(request, "teachers/created_discussions.html", context)
 
+# views.py
 def create_quiz(request):
     if request.method == 'POST':
+        subject_form = SubjectSelectionForm(request.POST)
         quiz_form = QuizForm(request.POST)
-        num_questions = int(request.POST.get('num_questions'))
-        if quiz_form.is_valid():
+
+        if subject_form.is_valid() and quiz_form.is_valid():
+            # Create the quiz object with the selected subject
             quiz = quiz_form.save(commit=False)
             quiz.author = request.user
+            quiz.subject = subject_form.cleaned_data['subject']  # Assign the selected subject
+
             quiz.save()
-            for i in range(num_questions):
-                question_form = QuestionForm(request.POST, prefix=f'question_{i}')
-                if question_form.is_valid():
-                    question = question_form.save(commit=False)
-                    question.quiz = quiz
-                    question.save()
-                    option_valid = True
-                    for j in range(4):  # Assuming you have 4 options for each question
-                        option_form = OptionForm(request.POST, id='option_{i}_{j}_text')
-                        if not option_form.is_valid():
-                            option_valid = False
-                            print(f"Failed to create option {j} for question {i} with error: {option_form.errors}")
-                            messages.error(request, f'Failed to create options for question {i}. Please check your input.')
-                            break
-                        option = option_form.save(commit=False)
-                        option.question = question
-                        option.save()
-                    if not option_valid:
-                        break
-                    correct_option_index = request.POST.get(f'correct_option_{i}')
-                    question.correct_option = question.options.all()[int(correct_option_index)]
-                    question.save()
-                else:
-                    print(f"Failed to create question {i} with error: {question_form.errors}")
-                    messages.error(request, f'Failed to create questions. Please check your input.')
-                    break
+
+            question_ids = set()
+
+            for param in request.POST:
+                if param.startswith("questions_"):
+                    question_id = param.split('_')[1]
+                    if question_id not in question_ids:
+                        question_ids.add(question_id)
+                        question_text = request.POST.get(f'questions_{question_id}_text')
+
+                        if question_text:
+                            # Create the question for the quiz
+                            question = Question(quiz=quiz, text=question_text)
+                            question.save()
+
+                            option_valid = True
+
+                            for j in range(4):  # Assuming you have 4 options for each question
+                                option_text = request.POST.get(f'options_{question_id}_{j}_text')
+                                is_correct = request.POST.get(f'correct_options_{question_id}') == str(j)
+
+                                if option_text:
+                                    # Create the option for the question
+                                    option = Option(question=question, text=option_text, is_correct=is_correct)
+                                    option.save()
+                                else:
+                                    option_valid = False
+                                    break
+
+                            if not option_valid:
+                                messages.error(request, f'Failed to create options for question {question_id}. Please check your input.')
+                                quiz.delete()  # Rollback quiz creation if options are not valid
+                                return redirect('teachers:create_quiz')  # Redirect to the form again with an error message
+
             messages.success(request, 'Quiz and questions created successfully.')
-            return JsonResponse({'success': True})
-        else:
-            print(f"Failed to create quiz with error: {quiz_form.errors}")
-            messages.error(request, 'Failed to create the quiz. Please check your input.')
+            return redirect('teachers:created_quizzes')  # Redirect to the page where you show created quizzes
+
     else:
         quiz_form = QuizForm()
-        context = {
-            'quiz_form': quiz_form,
-        }
-        return render(request, "teachers/create_quiz.html", context)
+        subject_form = SubjectSelectionForm()
 
-    return render(request, "teachers/create_quiz.html")
+    context = {
+        'quiz_form': quiz_form,
+        'subject_form': subject_form,
+    }
+    return render(request, "teachers/create_quiz.html", context)
+
+
 
 def manage_questions(request, quiz_id):
     quiz = get_object_or_404(Quiz, pk=quiz_id)

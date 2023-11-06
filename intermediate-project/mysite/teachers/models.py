@@ -4,15 +4,13 @@ from django.contrib.auth.models import User
 class Quiz(models.Model):
     title = models.CharField(max_length=255)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
+    subject = models.CharField(max_length=255, default="Math")
     # Other fields related to the quiz
 
 class Question(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
     text = models.TextField()
-    subject = models.CharField(max_length=255, default="Math")  # Set your default value
     created_at = models.DateTimeField(auto_now_add=True)
-    # Other fields related to the question
-
 
 class Option(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
@@ -20,11 +18,18 @@ class Option(models.Model):
     is_correct = models.BooleanField(default=False)
     # Other fields related to the option
 
+    def __str__(self):
+        return self.text
+
 class Grade(models.Model):
-    student = models.ForeignKey(User, on_delete=models.CASCADE)  # Ensure it's a ForeignKey to User
+    student = models.ForeignKey(User, on_delete=models.CASCADE)
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
     grade = models.DecimalField(max_digits=5, decimal_places=2)
-    # Other fields related to the grade
+    submission_attempts = models.PositiveIntegerField(default=0)  # Add this field for submission attempts
+
+    def __str__(self):
+        return f"{self.student.username} - {self.quiz.title}"
+
 
 class Discussion(models.Model):
     subject = models.CharField(max_length=255)

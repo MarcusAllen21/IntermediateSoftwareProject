@@ -1,0 +1,55 @@
+{% extends "students/index.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Your Grades</h1>
+
+    {% if student_grades %}
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Individual Grades</h2>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Quiz</th>
+                            <th>Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for grade in student_grades %}
+                            <tr>
+                                <td>{{ grade.quiz.title }}</td>
+                                <td>{{ grade.grade }}%</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <h2>Overall Grades by Subject</h2>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Overall Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject, overall_grade in overall_grades.items %}
+                            <tr>
+                                <td>{{ subject }}</td>
+                                <td>{{ overall_grade }}%</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <p>No grades available at the moment.</p>
+    {% endif %}
+</div>
+{% endblock %}
