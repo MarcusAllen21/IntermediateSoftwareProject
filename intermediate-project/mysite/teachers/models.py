@@ -5,7 +5,6 @@ class Quiz(models.Model):
     title = models.CharField(max_length=255)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     subject = models.CharField(max_length=255, default="Math")
-    question_responses = models.JSONField(default=dict)
     # Other fields related to the quiz
 
 class Question(models.Model):

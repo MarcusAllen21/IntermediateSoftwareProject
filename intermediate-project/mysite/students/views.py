@@ -50,33 +50,44 @@ def discussions(request):
     return render(request, "students/created_discussions.html", context)
 
 
+
 def quizzes(request):
-    # Retrieve all quizzes
-    all_quizzes = Quiz.objects.all()
+    # Retrieve the current user
+    user = request.user
 
-    # Create an empty dictionary to organize quizzes by subject
+    # Filter Quiz objects that don't have Grades for the current user
+    quizzes_without_grades = Quiz.objects.exclude(grade__student=user)
+
+    # Organize quizzes without grades by subject
     quizzes_by_subject = {}
-
-    # Iterate through all quizzes and group them by subject
-    for quiz in all_quizzes:
+    for quiz in quizzes_without_grades:
         subject = quiz.subject
         if subject not in quizzes_by_subject:
             quizzes_by_subject[subject] = []
         quizzes_by_subject[subject].append(quiz)
 
-    for subject, quizzes in quizzes_by_subject.items():
-        for quiz in quizzes:
-            # Access the related Grade object and its submission_attempts
-            grade = quiz.grade if hasattr(quiz, 'grade') else None  # Check if 'grade' attribute exists
-            submission_attempts = grade.submission_attempts if grade else 0.00  # Set to 0.00 if grade is not defined
+    # Filter Grade objects for the specified user
+    user_grades = Grade.objects.filter(student=user)
 
-            print(f"Quiz: {quiz.title}, Submission Attempts: {submission_attempts}")
+    # Organize quizzes with user grades by subject
+    user_quizzes_by_subject = {}
+    for grade in user_grades:
+        quiz = grade.quiz
+        subject = quiz.subject
+        if subject not in user_quizzes_by_subject:
+            user_quizzes_by_subject[subject] = []
+        user_quizzes_by_subject[subject].append({
+            'quiz': quiz,
+            'submission_attempts': grade.submission_attempts,
+        })
 
     context = {
-        'quizzes_by_subject': quizzes_by_subject
+        'quizzes_by_subject': quizzes_by_subject,
+        'user_quizzes_by_subject': user_quizzes_by_subject,
     }
 
     return render(request, 'students/quizzes.html', context)
+
 
 
 

@@ -72,7 +72,6 @@ def created_quizzes(request):
 
     quiz_data = []
     for quiz in quizzes:
-        questions = Question.objects.filter(quiz=quiz)
         grades = Grade.objects.filter(quiz=quiz)
         total_score = sum(grade.grade for grade in grades if grade.grade is not None)
 
@@ -80,8 +79,7 @@ def created_quizzes(request):
 
         quiz_data.append({
             'quiz': quiz,
-            'questions': questions,
-            'total_score': total_score,
+            'grade_submission_attempts': quiz.grade.submission_attempts if hasattr(quiz, 'grade') else 0,
             'average_score': average_score,
         })
 
@@ -90,6 +88,7 @@ def created_quizzes(request):
     }
 
     return render(request, "teachers/created_quizzes.html", context)
+
 
 def created_discussions(request):
     discussions = Discussion.objects.filter(author=request.user)

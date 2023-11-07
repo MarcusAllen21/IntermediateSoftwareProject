@@ -12,8 +12,13 @@
     <tbody>
       {% for quiz_info in quiz_data %}
         <tr>
-          <td><a href="{% url 'teachers:view_quiz_chart' quiz_info.quiz.id %}">{{ quiz_info.quiz.title }}</a></td>
-          <td>{{ quiz_info.average_score }}</td>
+          {% if quiz_info.grade_submission_attempts == 0 %}
+            <td><a style="color: white" href="{% url 'teachers:view_quiz_chart' quiz_info.quiz.id %}">{{ quiz_info.quiz.title }}</a></td>
+            <td>Has not Been Taken</td>
+          {% else %}
+            <td><a style="color: white" href="{% url 'teachers:view_quiz_chart' quiz_info.quiz.id %}">{{ quiz_info.quiz.title }}</a></td>
+            <td>{{ quiz_info.average_score }}%</td>
+          {% endif %}
         </tr>
       {% empty %}
         <tr>
