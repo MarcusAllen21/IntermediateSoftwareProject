@@ -64,6 +64,14 @@ def quizzes(request):
             quizzes_by_subject[subject] = []
         quizzes_by_subject[subject].append(quiz)
 
+    for subject, quizzes in quizzes_by_subject.items():
+        for quiz in quizzes:
+            # Access the related Grade object and its submission_attempts
+            grade = quiz.grade if hasattr(quiz, 'grade') else None  # Check if 'grade' attribute exists
+            submission_attempts = grade.submission_attempts if grade else 0.00  # Set to 0.00 if grade is not defined
+
+            print(f"Quiz: {quiz.title}, Submission Attempts: {submission_attempts}")
+
     context = {
         'quizzes_by_subject': quizzes_by_subject
     }
@@ -133,11 +141,11 @@ def student_grades(request):
 
     return render(request, 'students/grades.html', context)
 
-import json
 
 def take_quiz(request, quiz_id):
     # Retrieve the quiz
     quiz = get_object_or_404(Quiz, id=quiz_id)
+    num_questions = 0
 
     # Check if the student has exceeded the maximum number of attempts for the entire quiz
     if student_has_exceeded_attempts(request.user, quiz):
@@ -147,6 +155,7 @@ def take_quiz(request, quiz_id):
     # Retrieve the questions for the quiz and create forms for each question
     question_forms = []
     for question in quiz.question_set.all():
+        num_questions += 1
         options = Option.objects.filter(question=question)
         question_form = {
             'question': question,
@@ -158,7 +167,7 @@ def take_quiz(request, quiz_id):
         # Process the submitted quiz answers and update question-wise correctness
         grade, created = Grade.objects.get_or_create(student=request.user, quiz=quiz)
         submission_attempts = grade.submission_attempts
-        total_score = 0
+        total_score = 0.00
         question_responses = {}  # Initialize question-wise correctness
 
         for question in quiz.question_set.all():
@@ -170,11 +179,12 @@ def take_quiz(request, quiz_id):
                 question_responses[str(question.id)] = is_correct  # Update question-wise correctness
 
         submission_attempts += 1  # Increment submission attempts
-        
+
         # Update the Grade entry with the question-wise correctness
-        grade, created = Grade.objects.get_or_create(student=request.user, quiz=quiz, defaults={'submission_attempts': submission_attempts})
+        grade, created = Grade.objects.get_or_create(student=request.user, quiz=quiz, defaults={'submission_attempts': submission_attempts, 'grade': total_score})
         if not created:
-            grade.grade = None  # Reset the grade
+            average_score = Decimal(total_score) * 100
+            grade.grade = average_score / num_questions
             grade.submission_attempts = submission_attempts
         grade.question_responses = json.dumps(question_responses)  # Store question-wise correctness as JSON
         grade.save()
@@ -182,14 +192,9 @@ def take_quiz(request, quiz_id):
         # Check if the student has completed the quiz
         if student_has_completed_quiz(request.user, quiz):
             messages.success(request, 'Quiz submitted successfully. You have completed the quiz.')
-
-            # Calculate the average score by subject
-            subject = quiz.subject
-            subject_grades = Grade.objects.filter(student=request.user, quiz__subject=subject)
-            total_attempts = subject_grades.count()
-            average_score = Decimal(total_score) / Decimal(total_attempts) * 100 if total_attempts > 0 else 0
+            average_score = Decimal(total_score) * 100
             # Update the Grade entry for the subject with the calculated average score
-            grade.grade = average_score
+            grade.grade = average_score / num_questions
             grade.save()
         else:
             messages.success(request, 'Quiz submitted successfully. Continue to the next question.')

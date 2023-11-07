@@ -5,19 +5,23 @@ from .models import Quiz, Grade, Discussion, Question, Option
 from .forms import QuestionForm, OptionForm, QuizForm,SubjectSelectionForm
 import json
 from django.views.decorators.csrf import csrf_protect
+from decimal import Decimal
 
 def index(request):
     quizzes = Quiz.objects.all()
     grades = Grade.objects.all()
 
-    composite = 0
-    for grade in grades:
-        composite += grade.grade
+    composite = Decimal('0.0')  # Initialize composite to a Decimal value
 
-    if composite != 0:
-        composite = composite / len(grades)
-    else:
-        composite = 0
+    # Assuming you have a list of Grade objects in grades_list
+    for grade in grades:
+        if grade.grade is not None:
+            composite += grade.grade
+
+        if composite != 0:
+            composite = composite / len(grades)
+        else:
+            composite = 0
 
     context = {
         'quizzes': quizzes,
@@ -70,12 +74,14 @@ def created_quizzes(request):
     for quiz in quizzes:
         questions = Question.objects.filter(quiz=quiz)
         grades = Grade.objects.filter(quiz=quiz)
-        total_score = sum(grade.grade for grade in grades)
+        total_score = sum(grade.grade for grade in grades if grade.grade is not None)
+
         average_score = total_score / len(grades) if len(grades) > 0 else 0
 
         quiz_data.append({
             'quiz': quiz,
             'questions': questions,
+            'total_score': total_score,
             'average_score': average_score,
         })
 

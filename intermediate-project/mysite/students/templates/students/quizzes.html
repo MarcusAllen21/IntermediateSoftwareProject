@@ -7,21 +7,32 @@
     {% if quizzes_by_subject %}
         <div class="row">
             {% for subject, quizzes in quizzes_by_subject.items %}
-                <div class="col-md-12">
-                    <h1 class="subject-title text-center">{{ subject }}</h1>
-                    <div class="quiz-list-container" style="max-height: 300px; overflow-y: auto;">
-                        <ul class="quiz-list">
-                            {% for quiz in quizzes %}
-                                <li class="quiz-item">
-                                    <div class="quiz-info text-center mt-3">
-                                        <h5 style="color: black">{{ quiz.title }}</h5>
-                                    </div>
-                                    <div class="">
-                                        <a href="{% url 'students:take_quiz' quiz.id %}" class="btn btn-secondary btn-block">Take Quiz</a>
-                                    </div>
-                                </li>
-                            {% endfor %}
-                        </ul>
+                <div class="col-md-6 mb-4">
+                    <div class="subject-container">
+                        <h2 class="subject-title text-center">{{ subject }}</h2>
+                        <div class="quiz-list-container" style="max-height: 200px; overflow-y: auto;">
+                            <ul class="quiz-list">
+                                {% for quiz in quizzes %}
+                                    {% if quiz.grade.submission_attempts != 3 %}
+                                        <li class="quiz-item">
+                                            <div class="quiz-info text-center mt-3">
+                                                <h3 style="color: black">{{ quiz.title }}</h3>
+                                                {% if quiz.grade.submission_attempts != 3 %}
+                                                    {% if quiz.grade.submission_attempts %}
+                                                        <p style="color: black">Submission Attempts: {{ quiz.grade.submission_attempts }} / 3</p>
+                                                    {% else %}
+                                                        <p style="color: black">Submission Attempts: 0 / 3</p>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                            <div class="">
+                                                <a href="{% url 'students:take_quiz' quiz.id %}" class="btn btn-success btn-block">Take Quiz</a>
+                                            </div>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             {% endfor %}
@@ -32,13 +43,18 @@
 </div>
 
 <style>
+    .subject-container {
+        border-radius: 10px;
+        padding: 10px;
+    }
+
     .subject-title {
         font-size: 1.5rem;
         font-weight: bold;
     }
 
     .quiz-list-container {
-        max-height: 300px; /* Set a maximum height for the container */
+        max-height: 200px; /* Set a maximum height for the container */
         overflow-y: auto; /* Enable vertical scrollbar when content overflows */
     }
 
@@ -48,7 +64,7 @@
     }
 
     .quiz-item {
-        background-color: white;
+        background-color: rgb(255, 255, 255);
         border-radius: 10px;
         border: 2px solid black;
         padding: 5px;
@@ -57,10 +73,10 @@
     }
 
     .quiz-item:hover {
-        background-color: #f1f1f1; /* Change the background color on hover */
+        background-color: #b9b9b9; /* Change the background color on hover */
     }
 
-    .quiz-info h5 {
+    .quiz-info h3 {
         font-size: 1.2rem;
         font-weight: bold;
     }
