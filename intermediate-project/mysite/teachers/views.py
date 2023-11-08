@@ -130,7 +130,10 @@ def create_quiz(request):
 
                             for j in range(4):  # Assuming you have 4 options for each question
                                 option_text = request.POST.get(f'options_{question_id}_{j}_text')
-                                is_correct = request.POST.get(f'correct_options_{question_id}') == str(j)
+                                print(question_id)
+                                print(j)
+                                is_correct = request.POST.get(f'correct_options_{question_id}_{j}_is_correct') == 'on'
+                                print(is_correct)
 
                                 if option_text:
                                     # Create the option for the question
@@ -188,3 +191,20 @@ def questions_view(request, quiz_id, student_username):
     }
 
     return render(request, 'teachers/questions.html', context)
+
+from django.db.models import Q
+
+def search(request):
+    if request.method == 'GET':
+        subject = request.GET.get('query')
+        quizzes = Quiz.objects.filter(title__icontains=subject)
+        classes = MyClass.objects.filter(Q(class_name__icontains=subject) | Q(class_descriptor__icontains=subject))
+        discussions = Discussion.objects.filter(subject__icontains=subject)
+    else:
+        subject = ""
+        quizzes = []
+        classes = []
+        discussions = []
+        
+    context = {'subject': subject, 'quizzes': quizzes, 'classes': classes, 'discussions': discussions}
+    return render(request, "teachers/search.html", context)

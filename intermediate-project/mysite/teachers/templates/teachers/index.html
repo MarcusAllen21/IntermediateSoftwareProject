@@ -75,6 +75,24 @@
             display: block;
         }
 
+        .search-container {
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .search-input {
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid #fff;
+            color: #fff;
+            padding: 5px 10px;
+        }
+
+        .search-input::placeholder {
+            color: #fff;
+        }
+
         .cool-link {
             text-decoration: none;
             padding: 10px 20px;
@@ -93,6 +111,9 @@
     <div class="navbar">
         <div>
             Teacher: {{ request.user }}
+        </div>
+        <div class="search-container">
+            <input type="text" class="search-input" placeholder="Search">
         </div>
         <div>
             <a href="{% url 'teachers:create_discussion' %}" class="cool-link">Create Discussion</a>
@@ -120,7 +141,7 @@
         function showContent(contentId) {
             var buttonContents = document.querySelectorAll('.button-content');
             buttonContents.forEach(function (content) {
-                content.classList.remove('active');
+                content.classList remove('active');
             });
 
             var selectedContent = document.getElementById(contentId);

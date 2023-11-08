@@ -1,0 +1,41 @@
+{% extends "teachers/index.html" %}
+
+{% block content %}
+    <div id="search">
+        <form method="get" action="{% url 'teachers:search' %}">
+            <input type="text" name="query" placeholder="Search">
+            <button type="submit">Search</button>
+        </form>
+        
+        {% if classes %}
+            <h2>Courses</h2>
+            {% for class in classes %}
+                <div class="links">
+                    <a href="{% url 'teachers:course' class.id %}">{{ class.class_name }}</a>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% if quizzes %}
+            <h2>Quizzes</h2>
+            {% for quiz in quizzes %}
+                <div class="links">
+                    <a href="{% url 'teachers:quiz' quiz.id quiz.course.id %}">{{ quiz.title }}</a>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% if discussions %}
+            <h2>Discussions</h2>
+            {% for message in discussions %}
+                <div class="links">
+                    <a href="{% url 'teachers:post' message.id message.course.id %}">{{ message.subject }}</a>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% if not classes and not quizzes and not discussions %}
+            <span id="noresult">No Results for '{{ subject }}'</span>
+        {% endif %}
+    </div>
+{% endblock %}
