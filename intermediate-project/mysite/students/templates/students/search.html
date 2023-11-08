@@ -1,4 +1,4 @@
-{% extends "teachers/index.html" %}
+{% extends "students/index.html" %}
 
 {% block content %}
     <div id="search">
@@ -6,7 +6,7 @@
         {% if quizzes %}
             {% for quiz in quizzes %}
                 <div class="links">
-                    <a href="{% url 'teachers:created_quizzes' %}"><h1 style="color: black">{{ quiz.title }}</h1></a>
+                    <a href="{% url 'students:grades' %}"><h1 style="color: black">{{ quiz.title }}</h1></a>
                 </div>
             {% endfor %}
         {% endif %}
@@ -14,7 +14,7 @@
         {% if discussions %}
             {% for message in discussions %}
                 <div class="links">
-                    <a href="{% url 'teachers:created_discussions' %}"><h1 style="color: black">{{ message.subject }}</h1></a>
+                    <a href="{% url 'students:discussions' %}"><h1 style="color: black">{{ message.subject }}</h1></a>
                 </div>
             {% endfor %}
         {% endif %}

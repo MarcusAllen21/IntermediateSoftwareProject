@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db.models import Q
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .models import Quiz, Grade, Discussion, Question, Option
@@ -192,19 +193,18 @@ def questions_view(request, quiz_id, student_username):
 
     return render(request, 'teachers/questions.html', context)
 
-from django.db.models import Q
 
 def search(request):
+    subject = ""
+    quizzes = []
+    discussions = []
+
     if request.method == 'GET':
-        subject = request.GET.get('query')
-        quizzes = Quiz.objects.filter(title__icontains=subject)
-        classes = MyClass.objects.filter(Q(class_name__icontains=subject) | Q(class_descriptor__icontains=subject))
-        discussions = Discussion.objects.filter(subject__icontains=subject)
-    else:
-        subject = ""
-        quizzes = []
-        classes = []
-        discussions = []
-        
-    context = {'subject': subject, 'quizzes': quizzes, 'classes': classes, 'discussions': discussions}
+        subject = request.GET.get('search-bar')
+        print(subject)
+        if subject:
+            quizzes = Quiz.objects.filter(title__icontains=subject)
+            discussions = Discussion.objects.filter(subject__icontains=subject)
+
+    context = {'subject': subject, 'quizzes': quizzes, 'discussions': discussions}
     return render(request, "teachers/search.html", context)

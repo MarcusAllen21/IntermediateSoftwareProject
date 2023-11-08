@@ -113,7 +113,10 @@
             Teacher: {{ request.user }}
         </div>
         <div class="search-container">
-            <input type="text" class="search-input" placeholder="Search">
+            <form method="get" action="{% url 'teachers:search' %}">
+                <input type="text" class="search-input" name="search-bar" placeholder="Search">
+                <button style="border-radius: 10px;" type="submit">Search</button>
+            </form>
         </div>
         <div>
             <a href="{% url 'teachers:create_discussion' %}" class="cool-link">Create Discussion</a>
@@ -132,7 +135,8 @@
         </div>
     </div>
     <div class="container">
-        {% block content %}{% endblock %}
+        {% block content %}
+        {% endblock %}
     </div>
     <div class="footer">
         &copy; 2023 Marcus Allen

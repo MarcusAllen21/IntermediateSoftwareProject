@@ -96,6 +96,12 @@
         <div>
             User: {{ request.user }}
         </div>
+        <div class="search-container">
+            <form method="get" action="{% url 'students:search' %}">
+                <input type="text" class="search-input" name="search-bar" placeholder="Search">
+                <button style="border-radius: 10px;" type="submit">Search</button>
+            </form>
+        </div>
         <div>
             <a href="{% url 'students:create_discussion' %}" class="cool-link">Create Discussion</a>
         </div>

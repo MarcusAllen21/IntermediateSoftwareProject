@@ -233,3 +233,17 @@ def take_quiz(request, quiz_id):
 
     return render(request, 'students/take_quiz.html', context)
 
+def search(request):
+    subject = ""
+    quizzes = []
+    discussions = []
+
+    if request.method == 'GET':
+        subject = request.GET.get('search-bar')
+        print(subject)
+        if subject:
+            quizzes = Quiz.objects.filter(title__icontains=subject)
+            discussions = Discussion.objects.filter(subject__icontains=subject)
+
+    context = {'subject': subject, 'quizzes': quizzes, 'discussions': discussions}
+    return render(request, "students/search.html", context)

@@ -12,4 +12,5 @@ urlpatterns = [
     path('grades/', views.grades, name='grades'),
     path('take_quiz/<int:quiz_id>/', views.take_quiz, name='take_quiz'),
     path('grades/', views.student_grades, name='student_grades'),
+    path('search/', views.search, name='search'),
 ]
