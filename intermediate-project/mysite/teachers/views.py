@@ -81,6 +81,7 @@ def created_quizzes(request):
             'quiz': quiz,
             'grade_submission_attempts': quiz.grade.submission_attempts if hasattr(quiz, 'grade') else 0,
             'average_score': average_score,
+            'grades': grades,
         })
 
     context = {
@@ -157,39 +158,6 @@ def create_quiz(request):
     }
     return render(request, "teachers/create_quiz.html", context)
 
-
-
-def manage_questions(request, quiz_id):
-    quiz = get_object_or_404(Quiz, pk=quiz_id)
-    questions = Question.objects.filter(quiz=quiz)
-    context = {
-        'quiz': quiz,
-        'questions': questions,
-    }
-    return render(request, "teachers/manage_questions.html", context)
-
-def search_quizzes(request):
-    query = request.GET.get('q')
-    quizzes = Quiz.objects.filter(title__icontains=query)
-    return render(request, 'teachers/search_quizzes.html', {'quizzes': quizzes, 'query': query})
-
-def search_discussions(request):
-    query = request.GET.get('q')
-    discussions = Discussion.objects.filter(subject__icontains=query)
-    return render(request, 'teachers/search_discussions.html', {'discussions': discussions, 'query': query})
-
-def paginated_quizzes(request):
-    quizzes = Quiz.objects.all()
-    paginator = Paginator(quizzes, 10)
-    page = request.GET.get('page')
-    try:
-        quizzes = paginator.page(page)
-    except PageNotAnInteger:
-        quizzes = paginator.page(1)
-    except EmptyPage:
-        quizzes = paginator.page(paginator.num_pages)
-    return render(request, 'teachers/paginated_quizzes.html', {'quizzes': quizzes})
-
 def view_quiz_chart(request, quiz_id):
     quiz = get_object_or_404(Quiz, pk=quiz_id)
     grades = Grade.objects.filter(quiz=quiz)
@@ -197,9 +165,26 @@ def view_quiz_chart(request, quiz_id):
     student_names = [grade.student.username for grade in grades]
     student_grades = [grade.grade for grade in grades]
 
-    chart_data = {
+    context = {
+        'quiz': quiz,
         'labels': student_names,
         'data': student_grades,
     }
 
-    return render(request, "teachers/view_quiz_chart.html", {'quiz': quiz, 'chart_data': json.dumps(chart_data)})
+    return render(request, "teachers/view_quiz_chart.html", context)
+
+def questions_view(request, quiz_id, student_username):
+    # Retrieve the Quiz based on quiz_id
+    quiz = Quiz.objects.get(pk=quiz_id)
+
+    # You can also filter questions based on the quiz or any other criteria.
+    # For example, if you want to get questions related to a specific quiz:
+    questions = Question.objects.filter(quiz=quiz)
+
+    context = {
+        'quiz': quiz,
+        'questions': questions,
+        'student_username': student_username,
+    }
+
+    return render(request, 'teachers/questions.html', context)

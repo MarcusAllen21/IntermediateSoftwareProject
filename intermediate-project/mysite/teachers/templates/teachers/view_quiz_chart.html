@@ -1,43 +1,31 @@
 {% extends "teachers/index.html" %}
 
 {% block content %}
-  <h1><a href="{% url 'teachers:created_quizzes' %}">Quiz Results - {{ quiz.title }}</a></h1>
-  <div id="chart-container" style="height: 400px;">
-    <!-- Chart will be displayed here using JavaScript -->
+  <div class="container">
+    <h1 style="color: white;">{{ quiz.title }}</h1><br>
+    <h5><a style="color: black;" href="{% url 'teachers:created_quizzes' %}">Back to Quizzes</a></h5>
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Grade</th>
+          <th>Attempts</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in quiz.grade_set.all %}
+          <tr>
+            <td><a style="color: black" href="{% url 'teachers:questions' quiz.id i.student.username %}">{{ i.student.username }}</a></td>
+            <td>{{ i.grade }}%</td>
+            <td>{{ i.submission_attempts }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="2">No results available for this quiz.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
-
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const chartData = {{ chart_data|safe }};
-    const chartContainer = document.getElementById("chart-container");
-
-    // Create a chart using a charting library of your choice (e.g., Chart.js)
-    // Initialize the chart using the data from chartData
-    // Example: (assuming Chart.js is used)
-    const ctx = chartContainer.getContext('2d');
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: chartData.labels,
-        datasets: [
-          {
-            label: 'Grades',
-            data: chartData.data,
-            backgroundColor: 'rgba(0, 0, 0, 1)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1,
-          },
-        ],
-      },
-      options: {
-        scales: {
-          y: {
-            beginAtZero: true,
-          },
-        },
-      },
-    });
-  });
-</script>
 {% endblock %}

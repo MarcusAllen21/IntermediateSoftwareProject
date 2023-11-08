@@ -12,7 +12,7 @@
     <tbody>
       {% for quiz_info in quiz_data %}
         <tr>
-          {% if quiz_info.grade_submission_attempts == 0 %}
+          {% if quiz_info.grade.submission_attempts %}
             <td><a style="color: white" href="{% url 'teachers:view_quiz_chart' quiz_info.quiz.id %}">{{ quiz_info.quiz.title }}</a></td>
             <td>Has not Been Taken</td>
           {% else %}

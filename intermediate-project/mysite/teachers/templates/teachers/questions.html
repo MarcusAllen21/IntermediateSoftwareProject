@@ -1,0 +1,35 @@
+{% extends "teachers/index.html" %}
+
+{% block content %}
+  <h1>{{ quiz.title }} Questions</h1>
+  <a style="color: black" href="{% url 'teachers:created_quizzes' %}">Back to Quizzes</a>
+
+  <table class="table table-bordered" style="background-color: rgba(192, 192, 192, 0.3);border: 2px solid black;">
+    <thead>
+      <tr>
+        <th>Question</th>
+        <th>Options</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for question in questions %}
+        <tr>
+          <td>Question {{ forloop.counter }}.) {{ question.text }}</td>
+          <td>
+            <ol>
+              {% for option in question.option_set.all %}
+                <li style="color: {% if option.is_correct %}green{% else %}red{% endif %};">
+                  {{ option.text }}
+                </li>
+              {% endfor %}
+            </ol>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="2">No questions available for this quiz.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
