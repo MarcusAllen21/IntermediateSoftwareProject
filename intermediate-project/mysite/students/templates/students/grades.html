@@ -38,10 +38,10 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for subject, overall_grade in overall_grades.items %}
+                        {% for subject_info in grades_by_subject %}
                             <tr>
-                                <td>{{ subject }}</td>
-                                <td>{{ overall_grade }}%</td>
+                                <td>{{ subject_info.subject }}</td>
+                                <td>{{ subject_info.average_score }}%</td>
                             </tr>
                         {% endfor %}
                     </tbody>

@@ -55,39 +55,52 @@ def quizzes(request):
     # Retrieve the current user
     user = request.user
 
-    # Filter Quiz objects that don't have Grades for the current user
-    quizzes_without_grades = Quiz.objects.exclude(grade__student=user)
+    # Retrieve all quizzes
+    quizzes_all = Quiz.objects.all()
 
-    # Organize quizzes without grades by subject
+    # Organize quizzes by subject
     quizzes_by_subject = {}
-    for quiz in quizzes_without_grades:
-        subject = quiz.subject
-        if subject not in quizzes_by_subject:
-            quizzes_by_subject[subject] = []
-        quizzes_by_subject[subject].append(quiz)
 
     # Filter Grade objects for the specified user
     user_grades = Grade.objects.filter(student=user)
 
-    # Organize quizzes with user grades by subject
-    user_quizzes_by_subject = {}
+    # Create a set to keep track of attempted quiz IDs and their submission attempts
+    attempted_quizzes = {}
+
+    # Create a list to store quizzes that have been attempted by the user
+    taken_quizzes = []
+
     for grade in user_grades:
-        quiz = grade.quiz
+        attempted_quizzes[grade.quiz.id] = grade.submission_attempts
+        # Add quizzes with grades to the list of taken_quizzes
+        taken_quizzes.append(grade.quiz)
+
+    for quiz in quizzes_all:
         subject = quiz.subject
-        if subject not in user_quizzes_by_subject:
-            user_quizzes_by_subject[subject] = []
-        user_quizzes_by_subject[subject].append({
-            'quiz': quiz,
-            'submission_attempts': grade.submission_attempts,
-        })
+        if subject not in quizzes_by_subject:
+            quizzes_by_subject[subject] = []
+
+        # Check if the quiz has been attempted by the user
+        if quiz.id in attempted_quizzes:
+            submission_attempts = attempted_quizzes[quiz.id]
+
+            # Check if submission attempts have reached 3
+            if submission_attempts < 3:
+                # If submission attempts are less than 3, add the quiz to quizzes_by_subject
+                quizzes_by_subject[subject].append(quiz)
+        else:
+            # If the user hasn't attempted the quiz, add it to quizzes_by_subject
+            quizzes_by_subject[subject].append(quiz)
+
+    print(user_grades)
 
     context = {
         'quizzes_by_subject': quizzes_by_subject,
-        'user_quizzes_by_subject': user_quizzes_by_subject,
+        'taken_quizzes': taken_quizzes,  # Add taken quizzes to the context
+        'user_grades': user_grades,
     }
 
     return render(request, 'students/quizzes.html', context)
-
 
 
 
@@ -114,7 +127,6 @@ def grades(request):
     }
     return render(request, "students/grades.html", context)
 
-# Define these functions in your views.py or a separate utility module
 
 def student_has_exceeded_attempts(student, quiz):
     # Check if the student has exceeded the maximum number of attempts for the entire quiz
@@ -198,6 +210,7 @@ def take_quiz(request, quiz_id):
             grade.grade = average_score / num_questions
             grade.submission_attempts = submission_attempts
         grade.question_responses = json.dumps(question_responses)  # Store question-wise correctness as JSON
+        print(grade)
         grade.save()
 
         # Check if the student has completed the quiz
@@ -206,6 +219,7 @@ def take_quiz(request, quiz_id):
             average_score = Decimal(total_score) * 100
             # Update the Grade entry for the subject with the calculated average score
             grade.grade = average_score / num_questions
+            print(grade)
             grade.save()
         else:
             messages.success(request, 'Quiz submitted successfully. Continue to the next question.')
@@ -218,5 +232,4 @@ def take_quiz(request, quiz_id):
     }
 
     return render(request, 'students/take_quiz.html', context)
-
 

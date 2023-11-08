@@ -13,23 +13,25 @@
                         <div class="quiz-list-container" style="max-height: 200px; overflow-y: auto;">
                             <ul class="quiz-list">
                                 {% for quiz in quizzes %}
-                                    {% if quiz.grade.submission_attempts != 3 %}
-                                        <li class="quiz-item">
-                                            <div class="quiz-info text-center mt-3">
-                                                <h3 style="color: black">{{ quiz.title }}</h3>
-                                                {% if quiz.grade.submission_attempts != 3 %}
-                                                    {% if quiz.grade.submission_attempts %}
-                                                        <p style="color: black">Submission Attempts: {{ quiz.grade.submission_attempts }} / 3</p>
-                                                    {% else %}
-                                                        <p style="color: black">Submission Attempts: 0 / 3</p>
-                                                    {% endif %}
-                                                {% endif %}
-                                            </div>
-                                            <div class="">
-                                                <a href="{% url 'students:take_quiz' quiz.id %}" class="btn btn-success btn-block">Take Quiz</a>
-                                            </div>
-                                        </li>
-                                    {% endif %}
+                                    <li class="quiz-item">
+                                        <div class="quiz-info text-center mt-3">
+                                            <h3 style="color: black">{{ quiz.title }}</h3>
+                                            {% if quiz in taken_quizzes %}
+                                                <p style="color: black">Submission Attempts:
+                                                    {% for grade in user_grades %}
+                                                        {% if grade.quiz == quiz and grade.student == request.user %}
+                                                            {{ grade.submission_attempts }} / 3
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </p>
+                                            {% else %}
+                                                <p style="color: black">Submission Attempts: 0 / 3</p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="">
+                                            <a href="{% url 'students:take_quiz' quiz.id %}" class="btn btn-success btn-block">Take Quiz</a>
+                                        </div>
+                                    </li>
                                 {% endfor %}
                             </ul>
                         </div>
@@ -102,5 +104,4 @@
         background: #555; /* Handle background on hover */
     }
 </style>
-</div>
 {% endblock %}

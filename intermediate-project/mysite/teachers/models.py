@@ -23,12 +23,13 @@ class Option(models.Model):
 
 class Grade(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE)
-    quiz = models.OneToOneField(Quiz, on_delete=models.CASCADE) 
-    grade = models.DecimalField(max_digits=5, decimal_places=2, default=0.00) 
-    submission_attempts = models.PositiveIntegerField(default=0)  # Submission attempts
+    quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)  # Change to ForeignKey
+    grade = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    submission_attempts = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return f"{self.student.username} - {self.quiz.title}"
+
 
 
 class Discussion(models.Model):
