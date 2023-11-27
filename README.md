@@ -16,7 +16,8 @@
     - On the quiz creation, you will fill in the fields and alter the information for the quiz requirments.
         - you will then select POST to complete the submition
 
-    - on the view quizzes page, you may see all of the students quizzes by subject. You may click on the quizzes to get a more detailed view of ech.
+    - on the view quizzes page, you may see all of the students quizzes by subject. You may click on the quizzes to get a more detailed view of each.
+          - You may sort the quizzes in ascending or descending order
 
 - Student -
     - on the student page you may also upload discussions and view them. (Teacher - See 1 for reference)
@@ -24,3 +25,4 @@
     - You may take quizzes on the Take Quize page, by completing it will post the grades to your account.
 
     - you may go to the grades section to view all of your previous grades
+          - The grades will also display Grade weights and pie chart of grades
